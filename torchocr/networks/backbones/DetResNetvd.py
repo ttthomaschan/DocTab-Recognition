@@ -13,7 +13,7 @@ from torchocr.networks.CommonModules import HSwish
 class ConvBNACT(nn.Module):
     def __init__(self, in_channels, out_channels,kernel_size,stride=1,padding=0,groups=1,act=None):
         super().__init__()
-        self.conv = nn.conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
+        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
                               stride=stride, padding=padding, groups=groups,
                               bias=False)
         self.bn = nn.BatchNorm2d(out_channels)
@@ -24,7 +24,7 @@ class ConvBNACT(nn.Module):
         elif act is None:
             self.act = None
 
-    def load_state_dict(self,_3rd_name, _state, _name_prefix):
+    def load_3rd_state_dict(self,_3rd_name, _state, _name_prefix):
         to_load_state_dict = OrderedDict()
         if _3rd_name == 'paddle':
             to_load_state_dict['conv.weight'] = torch.Tensor(_state[f'{_name_prefix}_weights'])
@@ -88,7 +88,7 @@ class ConvBNACTWithPool(nn.Module):
 
 class ShortCut(nn.Module):
     def __init__(self, in_channels, out_channels, stride, name, if_first=False):
-        super.__init__()
+        super().__init__()
         assert name is not None, 'shortcut must have name'
 
         self.name = name 
