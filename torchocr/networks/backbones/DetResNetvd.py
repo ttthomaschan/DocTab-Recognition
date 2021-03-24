@@ -177,3 +177,48 @@ class BasicBlock(nn.Module):
         return self.relu(y)
     
 
+class ResNet(nn.Module):
+    def __init__(self, in_channels,layers,pretrained=True,**kwargs):
+        '''
+        the ResNet backbone network for detection module.
+        '''
+        super().__init__()
+        supported_layers = {
+            18: {'depth':[2,2,2,2], 'block_class':BasicBlock},
+            34: {'depth':[3,4,6,3], 'block_class':BasicBlock},
+            50: {'depth':[3,4,6,3], 'block_class':BottleneckBlock},
+            101: {'depth':[3,4,23,3], 'block_class':BottleneckBlock},
+            152: {'depth':[3,8,36,3], 'block_class':BottleneckBlock},
+            200: {'depth':[3,12,48,3], 'block_class':BottleneckBlock}
+        }
+        assert layers in supported_layers, \ 
+            "supported layers are {} but input is {}".format(supported_layers, layers)
+        depth = supported_layers[layers]['depth']
+        block_class = supported_layers[layers]['block_class']
+
+        num_filters = [64,128,256,512]
+        self.conv1 = nn.Sequential(
+            ConvBNACT(in_channels=in_channels,out_channels=32,kernel_size=3,stride=2,padding=1,act='relu'),
+            ConvBNACT(in_channels=32,out_channels=32,kernel_size=3,stride=1,padding=1,act='relu'),
+            ConvBNACT(in_channels=32,out_channels=64,kernel_size=3,stride=1,padding=1,act='relu')
+        )
+        self.pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.stages = nn.ModuleList()
+        self.out_channels = []
+        in_ch = 64
+        for block_index in range(len(depth)):
+            block_list = []
+            for i in range(depth[block_index]):
+                if layers >= 50:
+                    if layers in [101,151,200] and block_index == 2:
+                        if i == 0:
+                            conv_name = 'res' + str(block_index + 2) + 'a'
+                        else:
+                            conv_name = 'res' + str(block_index + 2) + 'b' +str(i)
+                    else:
+                        conv_name = 'res' + str(block_index + 2) + chr(97 + i)
+                else:
+                    conv_name = f'res{str(block_index + 2)}{chr(97 + i)}'
+
+
